@@ -922,15 +922,23 @@ def optimize_rooms(df, student_col, day_col, time_col, room_col, room_master, pr
     result["_prodi_canonical"] = result[prodi_col].apply(canonical_prodi)
     result["_prodi_priority"] = result["_prodi_canonical"].map(prodi_priorities).fillna(50).astype(float)
 
-    result["Program Studi Standar"] = result["_prodi_canonical"]
+    result["Program Studi Standar"] = result["_prodi_canonical"].astype("object")
     result["Prioritas Prodi (%)"] = result["_prodi_priority"].round(0).astype(int)
-    result["Tipe Ruang"] = ""
-    result["Kapasitas Ruang"] = pd.NA
-    result["Gedung"] = ""
-    result["Lantai"] = ""
-    result["Fasilitas Ruang"] = ""
-    result["Status Alokasi"] = ""
-    result["Keterangan Optimasi"] = ""
+
+    # Gunakan dtype object secara eksplisit. Pada Streamlit Cloud / pandas baru,
+    # kolom string dapat otomatis menjadi ArrowStringArray yang menolak assignment
+    # nilai numerik seperti Lantai = 2, 3, 4, 5.
+    result["Tipe Ruang"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+    result["Kapasitas Ruang"] = pd.Series([None] * len(result), index=result.index, dtype="object")
+    result["Gedung"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+    result["Lantai"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+    result["Fasilitas Ruang"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+    result["Status Alokasi"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+    result["Keterangan Optimasi"] = pd.Series([""] * len(result), index=result.index, dtype="object")
+
+    # Kolom Ruangan dari Excel juga bisa terbaca sebagai Arrow string.
+    # Paksa object agar aman saat hasil optimasi ditulis kembali.
+    result[room_col] = result[room_col].astype("object")
 
     occupied = defaultdict(list)
     rooms = room_master.copy().sort_values(["Kapasitas", "Nama Ruang"])
@@ -952,16 +960,31 @@ def optimize_rooms(df, student_col, day_col, time_col, room_col, room_master, pr
         return True
 
     def assign(idx, rr, day, start, end, note=""):
-        room = str(rr["Nama Ruang"])
-        cap = int(rr["Kapasitas"])
+        room = str(rr["Nama Ruang"]).strip()
+        cap = int(float(rr["Kapasitas"]))
+
+        tipe_ruang = "" if pd.isna(rr["Tipe Ruang"]) else str(rr["Tipe Ruang"]).strip()
+        gedung = "" if pd.isna(rr["Gedung"]) else str(rr["Gedung"]).strip()
+        fasilitas = "" if pd.isna(rr["Fasilitas"]) else str(rr["Fasilitas"]).strip()
+
+        lantai_raw = rr["Lantai"]
+        if pd.isna(lantai_raw):
+            lantai = ""
+        else:
+            try:
+                lantai_float = float(lantai_raw)
+                lantai = str(int(lantai_float)) if lantai_float.is_integer() else str(lantai_raw)
+            except (TypeError, ValueError):
+                lantai = str(lantai_raw)
+
         result.at[idx, room_col] = room
-        result.at[idx, "Tipe Ruang"] = rr["Tipe Ruang"]
+        result.at[idx, "Tipe Ruang"] = tipe_ruang
         result.at[idx, "Kapasitas Ruang"] = cap
-        result.at[idx, "Gedung"] = rr["Gedung"]
-        result.at[idx, "Lantai"] = rr["Lantai"]
-        result.at[idx, "Fasilitas Ruang"] = rr["Fasilitas"]
+        result.at[idx, "Gedung"] = gedung
+        result.at[idx, "Lantai"] = lantai
+        result.at[idx, "Fasilitas Ruang"] = fasilitas
         result.at[idx, "Status Alokasi"] = "TERALOKASI"
-        result.at[idx, "Keterangan Optimasi"] = note
+        result.at[idx, "Keterangan Optimasi"] = str(note) if note else ""
         occupied[(day, room)].append((start, end))
 
     for idx, row in sortable.iterrows():
