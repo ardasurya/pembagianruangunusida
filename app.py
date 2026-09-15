@@ -18,6 +18,39 @@ st.set_page_config(
 CAP_SMALL = 25
 CAP_LARGE = 40
 DEFAULT_ROOM_FILE = os.path.join(os.path.dirname(__file__), "DATA RUANG.xlsx")
+DEFAULT_ROOM_DATA = [
+    {"Nama Ruang": "201", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "202", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "205", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "302", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "303", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "304", "Gedung": "Gedung A", "Lantai": 2, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "307", "Gedung": "Gedung A", "Lantai": 3, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "308", "Gedung": "Gedung A", "Lantai": 3, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "309", "Gedung": "Gedung A", "Lantai": 3, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "401", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "402", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "403", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "404", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "405", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "407", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "408", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "409", "Gedung": "Gedung A", "Lantai": 4, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "501", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "502", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "503", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "504", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "505", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 25, "Fasilitas": "TV, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "506", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "508", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+    {"Nama Ruang": "509", "Gedung": "Gedung A", "Lantai": 5, "Kapasitas": 40, "Fasilitas": "Proyektor, AC, Meja, Kursi, Papan Tulis"},
+]
+
+def default_room_master():
+    df = pd.DataFrame(DEFAULT_ROOM_DATA)
+    df["Tipe Ruang"] = df["Kapasitas"].apply(lambda x: "Kecil" if x <= CAP_SMALL else "Besar")
+    return df
+
 
 PRODI_CANONICAL = [
     "Informatika",
@@ -411,10 +444,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Master ruang bawaan
-with open(DEFAULT_ROOM_FILE, "rb") as f:
-    default_room_bytes = f.read()
-
+# Master ruang:
+# 1) upload pengguna, jika ada
+# 2) DATA RUANG.xlsx di repository, jika tersedia
+# 3) fallback 25 ruang UNUSIDA yang tertanam di app.py
 with st.sidebar:
     st.header("⚙️ Pengaturan")
     allow_overflow = st.toggle("Izinkan kelas ≤25 memakai ruang besar jika ruang kecil penuh", value=True)
@@ -422,12 +455,28 @@ with st.sidebar:
     st.subheader("🏢 Master Ruang")
     uploaded_rooms = st.file_uploader("Ganti master ruang (opsional)", type=["xlsx", "xls"], key="room_upload")
 
-room_bytes = uploaded_rooms.getvalue() if uploaded_rooms else default_room_bytes
-try:
-    room_master, room_header_row = load_room_master_from_bytes(room_bytes)
-except Exception as e:
-    st.error(f"Master ruang tidak dapat dibaca: {e}")
-    st.stop()
+room_header_row = None
+if uploaded_rooms is not None:
+    try:
+        room_master, room_header_row = load_room_master_from_bytes(uploaded_rooms.getvalue())
+        room_source = "File master yang di-upload"
+    except Exception as e:
+        st.error(f"Master ruang yang di-upload tidak dapat dibaca: {e}")
+        st.stop()
+elif os.path.exists(DEFAULT_ROOM_FILE):
+    try:
+        with open(DEFAULT_ROOM_FILE, "rb") as f:
+            room_master, room_header_row = load_room_master_from_bytes(f.read())
+        room_source = "DATA RUANG.xlsx dari repository"
+    except Exception:
+        room_master = default_room_master()
+        room_source = "Master ruang bawaan aplikasi"
+else:
+    room_master = default_room_master()
+    room_source = "Master ruang bawaan aplikasi"
+
+with st.sidebar:
+    st.caption(f"Sumber: {room_source}")
 
 small_room_count = int((room_master["Kapasitas"] <= CAP_SMALL).sum())
 large_room_count = int((room_master["Kapasitas"] > CAP_SMALL).sum())
